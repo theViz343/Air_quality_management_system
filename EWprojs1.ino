@@ -9,7 +9,7 @@ int led4 = 8;
 int temp;
 int gasconc; 
 int notify=7;
-int smoke_arr[10]={0,0,0,0,0,0,0,0,0,0};
+float smoke_arr[10]={0,0,0,0,0,0,0,0,0,0};
 //thresholds
 int threshT1=100;
 int threshT2=200;
@@ -54,7 +54,10 @@ void loop() {
   //co = values[1];
   //smoke = values[2];
   smoke = (mq2.readSmoke()+mq2.readCO())/2; 
-  
+  if (smoke<0)
+  {
+    smoke=10000;  
+  }
   if (isnan(humidity) || isnan(temp)) {
     Serial.println(F("Failed to read from DHT sensor!"));
     return;
@@ -64,9 +67,9 @@ void loop() {
     smoke_arr[i]=smoke_arr[i-1];
   }
   smoke_arr[0]=smoke;
-  int norm_smoke=0;
-  int mult=1;
-  int sum=0;
+  float norm_smoke=0;
+  float mult=1;
+  float sum=0;
   for(int i=0;i<10;i++)
   {
     norm_smoke+=smoke_arr[i]*mult;
@@ -90,7 +93,7 @@ void loop() {
   } 
   if(temp<=35)
   {
-    digitalWrite(led1,HIGH);
+    digitalWrite(led1,LOW);
     digitalWrite(led2,LOW);
     digitalWrite(led3,LOW);
   }
@@ -106,7 +109,7 @@ void loop() {
     digitalWrite(led2,LOW);
     digitalWrite(led3,HIGH);
   }
-  if(smoke>100)
+  if(norm_smoke>100)
   {
     digitalWrite(led4,HIGH);
   }
