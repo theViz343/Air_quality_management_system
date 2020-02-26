@@ -9,7 +9,7 @@ int led4 = 8;
 int temp;
 int gasconc; 
 int notify=7;
-
+int smoke_arr[10]={0,0,0,0,0,0,0,0,0,0};
 //thresholds
 int threshT1=100;
 int threshT2=200;
@@ -59,15 +59,29 @@ void loop() {
     Serial.println(F("Failed to read from DHT sensor!"));
     return;
   }
-
+  for(int i=9;i>0;i--)
+  {
+    smoke_arr[i]=smoke_arr[i-1];
+  }
+  smoke_arr[0]=smoke;
+  int norm_smoke=0;
+  int mult=1;
+  int sum=0;
+  for(int i=0;i<10;i++)
+  {
+    norm_smoke+=smoke_arr[i]*mult;
+    sum=sum+mult;
+    mult*=0.8;  
+  }
+  norm_smoke/=sum;
   Serial.print(F("Humidity: "));
   Serial.print(humidity);
   Serial.print(F("%  Temperature: "));
   Serial.print(temp);
-  Serial.print(F("°C Smoke: "));
+  Serial.print(F("°C Norm Smoke: "));
+  Serial.print(norm_smoke);
+  Serial.print(" ppm Smoke: ");
   Serial.print(smoke);
-  Serial.print(" ppm LPG: ");
-  Serial.print(lpg);
   Serial.print(" ppm");
   Serial.println("");
   if (humidity>60)
