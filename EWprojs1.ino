@@ -1,15 +1,24 @@
+#include "DHT.h"
+#include <MQ2.h>
+#include<WiFi.h>
+#include<FirebaseESP32.h>
+
+const char WiFi_name="name";
+const char pass="password";
+
 int gasin = A5;
 int tempin = A4;
-int pin = A0;
-int buzzer = 4;
-int led1 = 7;
-int led2 = 6;
-int led3 = 5;
-int led4 = 8;
+
 int temp;
 int gasconc; 
 int notify=7;
 float smoke_arr[10]={0,0,0,0,0,0,0,0,0,0};
+float temp_arr[10]={0,0,0,0,0,0,0,0,0,0};
+float humidity_arr[10]={0,0,0,0,0,0,0,0,0,0};
+float prev_smoke=0;
+float prev_temp=0;
+float prev_humidity=0;
+
 //thresholds
 int threshT1=100;
 int threshT2=200;
@@ -17,8 +26,7 @@ int threshT3=300;
 int threshG1=100;
 int threshG2=200;
 int threshG3=300;
-#include "DHT.h"
-#include <MQ2.h>
+
 #define DHTPIN 2    
 #define DHTTYPE DHT11   // DHT 11
 MQ2 mq2(pin);
@@ -29,10 +37,7 @@ void setup() {
   // put your setup code here, to run once:
   pinMode(gasin,INPUT);
   pinMode(tempin,INPUT);
-  pinMode(buzzer,OUTPUT);
-  pinMode(led1,OUTPUT);
-  pinMode(led2,OUTPUT);
-  pinMode(led3,OUTPUT);
+  
   dht.begin();
   mq2.begin();
   Serial.begin(9600);
@@ -65,16 +70,22 @@ void loop() {
   for(int i=9;i>0;i--)
   {
     smoke_arr[i]=smoke_arr[i-1];
+    temp_arr[i]=temp_arr[i-1];
+    humidity_arr[i]=humidity_arr[i-1];
   }
   smoke_arr[0]=smoke;
+  temp_arr[0]=temp;
+  humidity_arr[0]=humidity;
   float norm_smoke=0;
   float mult=1;
   float sum=0;
   for(int i=0;i<10;i++)
   {
     norm_smoke+=smoke_arr[i]*mult;
+    norm_temp+=temp_arr[i]*mult;
+    norm_humidity+=humidity_arr[i]*mult;
     sum=sum+mult;
-    mult*=0.8;  
+    mult*=0.8;
   }
   norm_smoke/=sum;
   Serial.print(F("Humidity: "));
@@ -87,36 +98,61 @@ void loop() {
   Serial.print(smoke);
   Serial.print(" ppm");
   Serial.println("");
-  if (humidity>60)
+  if (norm_humidity>60)
   {
-   digitalWrite(buzzer,HIGH);
+   // humidity dangerous
+   // fan on
   } 
-  if(temp<=35)
+  else if (norm_humidity>50)
   {
-    digitalWrite(led1,LOW);
-    digitalWrite(led2,LOW);
-    digitalWrite(led3,LOW);
+   // humidity high
+   if (prev_humidity<=50)
+   {
+    // send notification
+   }
+  } 
+  else
+  {
+    // humidity safe
   }
-  if(temp>35&&temp<=40)
+  if(norm_temp>60)
   {
-    digitalWrite(led1,LOW);
-    digitalWrite(led2,HIGH);
-    digitalWrite(led3,LOW);
+    // temperature dangerous
+    // fan on
   }
-  if(temp>40)
+  else if(norm_temp>50)
   {
-    digitalWrite(led1,LOW);
-    digitalWrite(led2,LOW);
-    digitalWrite(led3,HIGH);
-  }
-  if(norm_smoke>100)
-  {
-    digitalWrite(led4,HIGH);
+    // temperature high
+    if (prev_temp<=50)
+    {
+      // send notification
+    }
   }
   else
   {
-    digitalWrite(led4,LOW);
+    // temperature normal
   }
+  
+  if(norm_smoke>100)
+  {
+    // smoke dangerous
+    // fan on
+  }
+  else if(norm_smoke>80)
+  {
+    // smoke high
+    if (prev_smoke<=80)
+    {
+      // send notification
+    }
+  }
+  else
+  {
+    // smoke normal
+  }
+  prev_smoke=norm_smoke;
+  prev_temp=norm_temp;
+  prev_humidity=norm_humidity;
    delay(500);
-   digitalWrite(buzzer,LOW);
+   
 }
