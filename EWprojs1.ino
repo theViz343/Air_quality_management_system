@@ -79,6 +79,7 @@ void loop() {
   float norm_smoke=0;
   float mult=1;
   float sum=0;
+  int flag=0;
   for(int i=0;i<10;i++)
   {
     norm_smoke+=smoke_arr[i]*mult;
@@ -88,16 +89,18 @@ void loop() {
     mult*=0.8;
   }
   norm_smoke/=sum;
-  Serial.print(F("Humidity: "));
-  Serial.print(humidity);
-  Serial.print(F("%  Temperature: "));
-  Serial.print(temp);
-  Serial.print(F("°C Norm Smoke: "));
-  Serial.print(norm_smoke);
-  Serial.print(" ppm Smoke: ");
-  Serial.print(smoke);
-  Serial.print(" ppm");
-  Serial.println("");
+  norm_temp/=sum;
+  norm_humidity/=sum;
+  //Serial.print(F("Humidity: "));
+  //Serial.print(humidity);
+  //Serial.print(F("%  Temperature: "));
+  //Serial.print(temp);
+  //Serial.print(F("°C Norm Smoke: "));
+  //Serial.print(norm_smoke);
+  //Serial.print(" ppm Smoke: ");
+  //Serial.print(smoke);
+  //Serial.print(" ppm");
+  //Serial.println("");
   if (norm_humidity>60)
   {
    // humidity dangerous
@@ -110,11 +113,23 @@ void loop() {
    {
     // send notification
    }
+   if (norm_humidity<45)
+   {
+    // fan off
+   }
   } 
   else
   {
     // humidity safe
   }
+  if (norm_temp>60 && norm_smoke>100)
+  {
+    // notification fire
+    flag=1;
+  }
+
+  if (flag==0)
+  {
   if(norm_temp>60)
   {
     // temperature dangerous
@@ -127,6 +142,10 @@ void loop() {
     {
       // send notification
     }
+    if (norm_tenp<45)
+   {
+    // fan off
+   }
   }
   else
   {
@@ -145,6 +164,10 @@ void loop() {
     {
       // send notification
     }
+    if (norm_smoke<70)
+   {
+    // fan off
+   }
   }
   else
   {
@@ -153,6 +176,6 @@ void loop() {
   prev_smoke=norm_smoke;
   prev_temp=norm_temp;
   prev_humidity=norm_humidity;
-   delay(500);
-   
+  delay(500);
+  } 
 }
