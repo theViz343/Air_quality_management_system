@@ -1,17 +1,20 @@
+#include <FirebaseESP32.h>
+
 #include "DHT.h"
 #include <MQ2.h>
-#include<WiFi.h>
-#include<FirebaseESP32.h>
+#include <WiFi.h>
 
-const char WiFi_name="name";
-const char pass="password";
+#define FIREBASE_HOST "https://air-quality-a7167.firebaseio.com/"   
+#define FIREBASE_AUTH "DPikF7rxmpNCVJqfUzbDNuQHbyqIlJBooZjUDRAY"   
+#define WIFI_SSID "Gangs of WiFipur"               
+#define WIFI_PASSWORD "12345678"
+
 
 int gasin = A5;
 int tempin = A4;
-
+int pinmq2 = 7;
 int temp;
 int gasconc; 
-int notify=7;
 float smoke_arr[10]={0,0,0,0,0,0,0,0,0,0};
 float temp_arr[10]={0,0,0,0,0,0,0,0,0,0};
 float humidity_arr[10]={0,0,0,0,0,0,0,0,0,0};
@@ -20,32 +23,85 @@ float prev_temp=0;
 float prev_humidity=0;
 
 //thresholds
-int threshT1=100;
-int threshT2=200;
-int threshT3=300;
-int threshG1=100;
-int threshG2=200;
-int threshG3=300;
+int threshT1=30;
+int threshT2=32;
+int threshT3=35;
+int threshT4=40;
+
+int threshG1=60;
+int threshG2=100;
+int threshG3=120;
+int threshG4=150;
+
+int threshH1=40;
+int threshH2=45;
+int threshH3=50;
+int threshH4=60;
 
 #define DHTPIN 2    
 #define DHTTYPE DHT11   // DHT 11
-MQ2 mq2(pin);
+MQ2 mq2(pinmq2);
 
 int lpg, co, smoke;
 DHT dht(DHTPIN, DHTTYPE);
+
+int isFanRequired(float val, float prev_val, float T1, float T2, float T3, float T4)
+{
+  if(val>T4)
+  {
+    //Turn fan on  
+    return 0;
+  }  
+  else if(val>T3 && prev_val<=val)
+  {
+    //notify on
+    return 1;  
+  }
+  else if(val<T2 && prev_val>=val)
+  {
+    //notify off
+    return 2;  
+  }
+  else if(val<T1)
+  {
+    //Turn fan off
+    return 3;  
+  }
+  else
+  {
+    //Do nothing
+    return -1;  
+  }
+}
+
 void setup() {
   // put your setup code here, to run once:
   pinMode(gasin,INPUT);
   pinMode(tempin,INPUT);
-  
   dht.begin();
   mq2.begin();
-  Serial.begin(9600);
-  
+  Serial.begin(115200);
+
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+  Serial.print("Connecting to Wi-Fi");
+  while (WiFi.status() != WL_CONNECTED)
+  {
+    Serial.print(".");
+    delay(300);
+  }
+  Serial.println();
+  Serial.print("Connected with IP: ");
+  Serial.println(WiFi.localIP());
+  Serial.println();
+
+  Firebase.begin(FIREBASE_HOST, FIREBASE_AUTH);
+
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
+  Firebase.begin(FIREBASE_HOST, FIREBASE_AUTH);
+    
   delay(500);
    //Serial.print(temp);
    //Serial.print(gasin);
@@ -77,6 +133,8 @@ void loop() {
   temp_arr[0]=temp;
   humidity_arr[0]=humidity;
   float norm_smoke=0;
+  float norm_temp=0;
+  float norm_humidity=0;
   float mult=1;
   float sum=0;
   int flag=0;
@@ -101,81 +159,19 @@ void loop() {
   //Serial.print(smoke);
   //Serial.print(" ppm");
   //Serial.println("");
-  if (norm_humidity>60)
-  {
-   // humidity dangerous
-   // fan on
-  } 
-  else if (norm_humidity>50)
-  {
-   // humidity high
-   if (prev_humidity<=50)
-   {
-    // send notification
-   }
-   if (norm_humidity<45)
-   {
-    // fan off
-   }
-  } 
-  else
-  {
-    // humidity safe
-  }
-  if (norm_temp>60 && norm_smoke>100)
-  {
-    // notification fire
-    flag=1;
-  }
 
-  if (flag==0)
-  {
-  if(norm_temp>60)
-  {
-    // temperature dangerous
-    // fan on
-  }
-  else if(norm_temp>50)
-  {
-    // temperature high
-    if (prev_temp<=50)
-    {
-      // send notification
-    }
-    if (norm_tenp<45)
-   {
-    // fan off
-   }
-  }
-  else
-  {
-    // temperature normal
-  }
+  int smoke_status= isFanRequired(norm_smoke,prev_smoke,threshG1,threshG2,threshG3,threshG4);
+  int temp_status= isFanRequired(norm_temp,prev_temp,threshT1,threshT2,threshT3,threshT4);
+  int humidity_status= isFanRequired(norm_humidity,prev_humidity,threshH1,threshH2,threshH3,threshH4);
+
+  boolean notifyON= (smoke_status==1 || temp_status==1 || humidity_status==1);
+  boolean notifyOFF= (smoke_status==2 || temp_status==2 || humidity_status==2);
+
+  boolean fanON = (smoke_status==0 || temp_status==0 || humidity_status==0);
   
-  if(norm_smoke>100)
-  {
-    // smoke dangerous
-    // fan on
-  }
-  else if(norm_smoke>80)
-  {
-    // smoke high
-    if (prev_smoke<=80)
-    {
-      // send notification
-    }
-    if (norm_smoke<70)
-   {
-    // fan off
-   }
-  }
-  else
-  {
-    // smoke normal
-  }
   prev_smoke=norm_smoke;
   prev_temp=norm_temp;
   prev_humidity=norm_humidity;
   delay(500);
-  } 
+   
 }
