@@ -8,11 +8,10 @@
 #define FIREBASE_AUTH "DPikF7rxmpNCVJqfUzbDNuQHbyqIlJBooZjUDRAY"   
 #define WIFI_SSID "Gangs of WiFipur"               
 #define WIFI_PASSWORD "12345678"
-
-
+FirebaseData firebaseData;
 int gasin = A5;
 int tempin = A4;
-int pinmq2 = 7;
+int pinmq2 = 35;
 int temp;
 int gasconc; 
 float smoke_arr[10]={0,0,0,0,0,0,0,0,0,0};
@@ -38,7 +37,7 @@ int threshH2=45;
 int threshH3=50;
 int threshH4=60;
 
-#define DHTPIN 2    
+#define DHTPIN 34   
 #define DHTTYPE DHT11   // DHT 11
 MQ2 mq2(pinmq2);
 
@@ -119,9 +118,25 @@ void loop() {
   {
     smoke=10000;  
   }
+
+FirebaseJson updateData;
+updateData.set("data1","value1");
+if (Firebase.updateNode(firebaseData, "/sensor-values", updateData)) {
+
+  Serial.println(firebaseData.dataPath());
+
+  Serial.println(firebaseData.dataType());
+
+  Serial.println(firebaseData.jsonString()); 
+
+} else {
+  Serial.println(firebaseData.errorReason());
+}
+  if (isnan(smoke)){
+    Serial.println(F("Failed to read from mq2 sensor!"));
+  }
   if (isnan(humidity) || isnan(temp)) {
     Serial.println(F("Failed to read from DHT sensor!"));
-    return;
   }
   for(int i=9;i>0;i--)
   {
@@ -149,16 +164,18 @@ void loop() {
   norm_smoke/=sum;
   norm_temp/=sum;
   norm_humidity/=sum;
+
+
   //Serial.print(F("Humidity: "));
   //Serial.print(humidity);
   //Serial.print(F("%  Temperature: "));
   //Serial.print(temp);
-  //Serial.print(F("°C Norm Smoke: "));
-  //Serial.print(norm_smoke);
-  //Serial.print(" ppm Smoke: ");
-  //Serial.print(smoke);
-  //Serial.print(" ppm");
-  //Serial.println("");
+  Serial.print(F("°C Norm Smoke: "));
+  Serial.print(norm_smoke);
+  Serial.print(" ppm Smoke: ");
+  Serial.print(smoke);
+  Serial.print(" ppm"); 
+  Serial.println("");
 
   int smoke_status= isFanRequired(norm_smoke,prev_smoke,threshG1,threshG2,threshG3,threshG4);
   int temp_status= isFanRequired(norm_temp,prev_temp,threshT1,threshT2,threshT3,threshT4);
