@@ -9,9 +9,9 @@ Libraries
 * <MQ2.h>
 * <WiFi.h>
 
-You can install the app on your device by downloading the apk from the repository and then installing it.
+>**You can install the app on your device by downloading the apk from the repository and then installing it.**
 
-A .aia file is also available if you want to view/modify the app's source code.
+>**A .aia file is also available if you want to view/modify the app's source code.**
 
 Replace `Gangs of WiFipur` by WiFi name & `12345678` by WiFi password.
 
