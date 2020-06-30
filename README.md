@@ -17,4 +17,4 @@ Replace `Gangs of WiFipur` by WiFi name & `12345678` by WiFi password.
 ## Working
 The device is based on the concept of a home automation system. It has temperature, humidity and various gas sensors. It gives information about the concentration of gases and temperature & humidity level to the administrator via an android app. It also notifies the user when levels increase above safe level and can take precautionary actions in dangerous situations according to need. (Here switching on/off exhaust fan).
 
-!(https://github.com/theViz343/Air_quality_management_system/blob/master/Circuit%20diagram.jpg "Circuit Diagram")
+![Alt text](Circuit diagram.jpg?raw=true "Circuit Diagram")
