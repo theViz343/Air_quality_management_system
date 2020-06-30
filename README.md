@@ -3,10 +3,11 @@
 ## Aim
 The project aims to develop a semi-automated air quality monitoring device that can alert the user on potentially dangerous situations and can take precautionary measures.
 
-## Libraries required
-<DHT.h>
-<MQ2.h>
-<WiFi.h>
+## Requirements
+Libraries
+* <DHT.h>
+* <MQ2.h>
+* <WiFi.h>
 
 Click here to download the app
 Link for the app
